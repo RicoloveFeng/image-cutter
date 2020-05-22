@@ -38,12 +38,8 @@ imageHeight = image.size[1]
 dw = imageWidth // 3
 dh = imageHeight // 3
 
-print(folder)
 if not os.path.exists(folder):
     os.makedirs(folder)
-    print("make done")
-else:
-    print("exist")
 
 for i in range(3):
     for j in range(3):
