@@ -31,7 +31,7 @@ if mode == "s":
 
 else: # mode == "l"
     newsize = max (imageWidth, imageHeight)
-    bg = Image.new("RGB", (newsize, newsize), "White")
+    bg = Image.new("RGBA", (newsize, newsize))
     x1 = max (newsize - imageWidth, 0) // 2
     y1 = max (newsize - imageHeight, 0) // 2
     bg.paste(image, (x1, y1))
