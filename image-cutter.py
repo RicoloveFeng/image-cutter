@@ -31,26 +31,25 @@ if mode == "s":
 
 else: # mode == "l"
     newsize = max (imageWidth, imageHeight)
-    bg = Image.new("RGBA", (newsize, newsize))
+    bg = Image.new("RGBA", (newsize, newsize)) if image.format == "PNG" else Image.new("RGB", (newsize, newsize), "White")
     x1 = max (newsize - imageWidth, 0) // 2
     y1 = max (newsize - imageHeight, 0) // 2
     bg.paste(image, (x1, y1))
     image = bg
 
-imageWidth = image.size[0]
-imageHeight = image.size[1]
-dw = imageWidth // 3
-dh = imageHeight // 3
-gapValue = int(imageWidth / 422 * 6) // 2 if gap else 0
+gapValue = round(image.size[0] / 422 * 2) if gap else 0
+subImageLength = round((image.size[0] - 2 * gapValue) / 3)
+imageLength = subImageLength * 3 + gapValue * 2 
+image = image.resize((imageLength, imageLength), Image.ANTIALIAS)
 
 for i in range(3):
     for j in range(3):
         subimg = image.crop(
             (
-                dw * j + gapValue * min(j, 1),
-                dh * i + gapValue * min(i, 1),
-                min(dw * (j + 1), imageWidth) - gapValue * min(2 - j, 1),
-                min(dh * (i + 1), imageHeight) - gapValue * min(2 - i, 1)
+                subImageLength * j + gapValue * j,
+                subImageLength * i + gapValue * i,
+                subImageLength * (j + 1) + gapValue * j,
+                subImageLength * (i + 1) + gapValue * i,
             )
         )
         subimg.save(folder +str(i*3 + j + 1) + "." + fileFormat)
