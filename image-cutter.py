@@ -60,16 +60,12 @@ if mode in ["s","l"]:
 elif mode == "r":
     # code by 燃玉 on matlab
     # port by Ricolove
-    #assert(fileFormat != "png")
     channelNum = len(image.getpixel((0, 0)))
     lineNum = 90
     lightCoef = 0.3
     lineDis = int(imageHeight / lineNum / 2) * 2 - 1
     lineDisHalf = int((lineDis - 1) / 2)
     lineIndex = lineDisHalf
-    
-    # debug
-    lineCount = 0
 
     # 图片预加载
     draw = ImageDraw.Draw(image)
@@ -91,15 +87,18 @@ elif mode == "r":
             for j in range(upperBound, lowerBound):
                 pixel = pixels[i, j]
                 for channel in range(3):
-                    pixelSum[channel] += pixel[channel]
+                    if channelNum == 4 and pixel[3] < 255:
+                        alpha = pixel[3]
+                        pixelSum[channel] += (pixel[channel] * alpha + 255 * (255 - alpha)) // 255
+                    else:
+                        pixelSum[channel] += pixel[channel]
 
             # 算出每个 channel 对应的满颜色的行数
             # 记最后余量所填充的行数是第 N 行, 颜色值总和为 S, 则应该满足：
             # 255 * (2N - 1) = S 
-            lightBound = [int((pixelSum[k] + 255) / 511) for k in range(3)]  
+            lightBound = [(pixelSum[k] + 255) // 511 for k in range(3)]  
             
             # 算出未满颜色行的颜色值
-            # TODO: 这是什么意思
             lightColor = [int((pixelSum[k] + 256) % 512 / 2 * lightCoef) for k in range(3)]
 
             # 针对像素所处位置，分别进行涂色
@@ -112,6 +111,8 @@ elif mode == "r":
                         color[k] = lightColor[k]
                     else:
                         color[k] = 255
+                if channelNum == 4:
+                    color += [255]
                 return color
             
             # 当一行高度很大时，使用ImageDraw.line方法会比单个像素着色快很多
@@ -125,13 +126,15 @@ elif mode == "r":
             else:      
                 for j in range(upperBound, lowerBound):
                     distance = abs(j - lineIndex)
-                    pixels[i, j] = tuple(getColorByBound(distance, lightBound, lightColor) + [pixels[i, j][3]] if channelNum == 4 else [])
+                    color = getColorByBound(distance, lightBound, lightColor)
+                    pixels[i, j] = tuple(color)
             pass
             
         lineIndex += lineDis
-        lineCount += 1
+
     #debug
     print("time cost:", time.time()-now)
+
     image.save(folder + "line." + fileFormat)
 
 else:
