@@ -1,16 +1,17 @@
 import argparse, os, time
 from PIL import Image, ImageDraw
+from math import sqrt, sin
 
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--mode", "-m", help="cutting mode", choices=["s","l","r"], default="s")
+parser.add_argument("--mode", "-m", help="cutting mode", choices=["s","l","r","c","p","pb","pw"], default="s")
 parser.add_argument("--file", "-f", help="image path", required=True)
 parser.add_argument("--gap", "-g", help="consider gap when cutting", choices=[True, False], default=True)
 
 args = parser.parse_args()
 
-mode = args.mode
+mode = args.mode[0]
 file = args.file
 gap = args.gap
 
@@ -20,8 +21,12 @@ imageHeight = image.size[1]
 fileFormat = file.split(".")[-1]
 folder = "./" + os.path.basename(file)[:-len(fileFormat)-1] + "/"
 
-if not os.path.exists(folder):
-    os.makedirs(folder)
+if mode != "p":
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+# time cost
+now = time.time()
 
 if mode in ["s","l"]:
     if mode == "s":
@@ -70,9 +75,6 @@ elif mode == "r":
     # 图片预加载
     draw = ImageDraw.Draw(image)
     pixels = image.load()
-
-    # 运行计时
-    now = time.time()
 
     # 对每一条斑马色线进行处理
     while lineIndex < imageHeight:
@@ -132,11 +134,44 @@ elif mode == "r":
             
         lineIndex += lineDis
 
-    #debug
-    print("time cost:", time.time()-now)
-
     image.save(folder + "line." + fileFormat)
+
+elif mode == "c":
+    draw = ImageDraw.Draw(image)
+    pixels = image.load()
+    white = (255,255,255)
+    for x in range(0, imageWidth):
+        delta = int(10*sin(0.035*x))
+        for y in range(0, imageHeight, 10):
+            for w in range(0, 4):
+                dy = min(imageHeight, max(0, y + delta + w))
+                try:
+                    pixels[x, dy] = white
+                except:
+                    pass
+    
+    image.save(folder + "arc." + fileFormat)
+
+elif mode == "p":
+    draw = ImageDraw.Draw(image)
+    pixels = image.load()
+    white = (255,255,255)
+    black = (0,0,0)
+    linecolor = black if len(args.mode) == 2 and args.mode[1] == 'b' else white
+    for x in range(0, imageWidth):
+        delta = int(10*sin(0.035*x))
+        for y in range(0, imageHeight, 10):
+            for w in range(0, 4):
+                dy = min(imageHeight, max(0, y + delta + w))
+                try:
+                    pixels[x, dy] = linecolor
+                except:
+                    pass
+    #image.show()
+    image.save("playground."+fileFormat)
 
 else:
     print("Using unsupported mode")
     pass
+
+print("time cost:", time.time()-now)
